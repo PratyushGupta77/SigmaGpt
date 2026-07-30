@@ -5,36 +5,71 @@ import { useContext, useState, useEffect } from "react";
 import {ScaleLoader} from "react-spinners";
 
 function ChatWindow() {
-    const {prompt, setPrompt, reply, setReply, currThreadId, setPrevChats, setNewChat} = useContext(MyContext);
+    const { prompt, setPrompt, reply, setReply, currThreadId, setPrevChats, setNewChat, prevChats } = useContext(MyContext);
     const [loading, setLoading] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
 
+    // const getReply = async () => {
+    //     setLoading(true);
+    //     setNewChat(false);
+
+    //     console.log("message ", prompt, " threadId ", currThreadId);
+    //     const options = {
+    //         method: "POST",
+    //         headers: {
+    //             "Content-Type": "application/json"
+    //         },
+    //         body: JSON.stringify({
+    //             message: prompt,
+    //             threadId: currThreadId
+    //         })
+    //     };
+
+    //     try {
+    //         const response = await fetch("http://localhost:8080/api/chat", options);
+    //         const res = await response.json();
+    //         console.log(res);
+    //         setReply(res.reply);
+    //     } catch(err) {
+    //         console.log(err);
+    //     }
+    //     setLoading(false);
+    // }
+
+
     const getReply = async () => {
-        setLoading(true);
-        setNewChat(false);
+    setLoading(true);
+    setNewChat(false);
 
-        console.log("message ", prompt, " threadId ", currThreadId);
-        const options = {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                message: prompt,
-                threadId: currThreadId
-            })
-        };
+    // 1. Naya message history mein add karein
+    const userMessage = { role: "user", content: prompt };
+    const updatedHistory = [...prevChats, userMessage]; 
+    
+    // 2. Poora array bhejein backend ko
+    const options = {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            messages: updatedHistory, // Yahan poori history ja rahi hai
+            threadId: currThreadId
+        })
+    };
 
-        try {
-            const response = await fetch("http://localhost:8080/api/chat", options);
-            const res = await response.json();
-            console.log(res);
-            setReply(res.reply);
-        } catch(err) {
-            console.log(err);
-        }
-        setLoading(false);
+    try {
+        const response = await fetch("http://localhost:8080/api/chat", options);
+        const data = await response.json();
+        
+        // 3. AI ka reply add karke history update karein
+        const aiMessage = { role: "assistant", content: data.reply };
+        setPrevChats([...updatedHistory, aiMessage]);
+    } catch(err) {
+        console.log(err);
     }
+    
+    setLoading(false);
+    setPrompt(""); // Input clear karein
+};
+
 
     //Append new chat to prevChats
     useEffect(() => {

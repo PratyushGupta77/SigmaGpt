@@ -67,41 +67,75 @@ router.delete("/thread/:threadId", async (req, res) => {
     }
 });
 
-router.post("/chat", async(req, res) => {
-    const {threadId, message} = req.body;
+// router.post("/chat", async(req, res) => {
+//     const {threadId, message} = req.body;
 
-    if(!threadId || !message) {
-        res.status(400).json({error: "missing required fields"});
+//     if(!threadId || !message) {
+//         res.status(400).json({error: "missing required fields"});
+//     }
+
+//     try {
+//         let thread = await Thread.findOne({threadId});
+
+//         if(!thread) {
+//             //create a new thread in Db
+//             thread = new Thread({
+//                 threadId,
+//                 title: message,
+//                 messages: [{role: "user", content: message}]
+//             });
+//         } else {
+//             thread.messages.push({role: "user", content: message});
+//         }
+
+//         const assistantReply = await getOpenAIAPIResponse(message);
+
+//         thread.messages.push({role: "assistant", content: assistantReply});
+//         thread.updatedAt = new Date();
+
+//         await thread.save();
+//         res.json({reply: assistantReply});
+//     } catch(err) {
+//         console.log(err);
+//         res.status(500).json({error: "something went wrong"});
+//     }
+// });
+
+router.post("/chat", async (req, res) => {
+    // Frontend se 'messages' array aa raha hai
+    const { threadId, messages } = req.body; 
+
+    if (!threadId || !messages) {
+        return res.status(400).json({ error: "missing required fields" });
     }
 
     try {
-        let thread = await Thread.findOne({threadId});
+        let thread = await Thread.findOne({ threadId });
 
-        if(!thread) {
-            //create a new thread in Db
+        if (!thread) {
             thread = new Thread({
                 threadId,
-                title: message,
-                messages: [{role: "user", content: message}]
+                title: messages[messages.length - 1].content, // Last message as title
+                messages: messages
             });
         } else {
-            thread.messages.push({role: "user", content: message});
+            thread.messages = messages; // Pura array update karo
         }
 
-        const assistantReply = await getOpenAIAPIResponse(message);
+        // PURANA: getOpenAIAPIResponse(message) -> GALAT
+        // NAYA: getOpenAIAPIResponse(messages) -> SAHI
+        const assistantReply = await getOpenAIAPIResponse(messages);
 
-        thread.messages.push({role: "assistant", content: assistantReply});
+        thread.messages.push({ role: "assistant", content: assistantReply });
         thread.updatedAt = new Date();
 
         await thread.save();
-        res.json({reply: assistantReply});
-    } catch(err) {
+        res.json({ reply: assistantReply });
+    } catch (err) {
         console.log(err);
-        res.status(500).json({error: "something went wrong"});
+        res.status(500).json({ error: "something went wrong" });
     }
 });
-
-
 
 
 export default router;
