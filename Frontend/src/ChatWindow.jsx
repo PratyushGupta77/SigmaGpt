@@ -2,7 +2,7 @@ import "./ChatWindow.css";
 import Chat from "./Chat.jsx";
 import { MyContext } from "./MyContext.jsx";
 import { useContext, useState, useEffect } from "react";
-import {ScaleLoader} from "react-spinners";
+import { ScaleLoader } from "react-spinners";
 
 function ChatWindow() {
     const { prompt, setPrompt, reply, setReply, currThreadId, setPrevChats, setNewChat, prevChats } = useContext(MyContext);
@@ -38,47 +38,47 @@ function ChatWindow() {
 
 
     const getReply = async () => {
-    setLoading(true);
-    setNewChat(false);
+        setLoading(true);
+        setNewChat(false);
 
-    // 1. Naya message history mein add karein
-    const userMessage = { role: "user", content: prompt };
-    const updatedHistory = [...prevChats, userMessage]; 
-    
-    // 2. Poora array bhejein backend ko
-    const options = {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            messages: updatedHistory, // Yahan poori history ja rahi hai
-            threadId: currThreadId
-        })
+        // 1. Naya message history mein add karein
+        const userMessage = { role: "user", content: prompt };
+        const updatedHistory = [...prevChats, userMessage];
+
+        // 2. Poora array bhejein backend ko
+        const options = {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                messages: updatedHistory, // Yahan poori history ja rahi hai
+                threadId: currThreadId
+            })
+        };
+
+        try {
+            const response = await fetch("http://localhost:8080/api/chat", options);
+            const data = await response.json();
+
+            // 3. AI ka reply add karke history update karein
+            const aiMessage = { role: "assistant", content: data.reply };
+            setPrevChats([...updatedHistory, aiMessage]);
+        } catch (err) {
+            console.log(err);
+        }
+
+        setLoading(false);
+        setPrompt(""); // Input clear karein
     };
-
-    try {
-        const response = await fetch("http://localhost:8080/api/chat", options);
-        const data = await response.json();
-        
-        // 3. AI ka reply add karke history update karein
-        const aiMessage = { role: "assistant", content: data.reply };
-        setPrevChats([...updatedHistory, aiMessage]);
-    } catch(err) {
-        console.log(err);
-    }
-    
-    setLoading(false);
-    setPrompt(""); // Input clear karein
-};
 
 
     //Append new chat to prevChats
     useEffect(() => {
-        if(prompt && reply) {
+        if (prompt && reply) {
             setPrevChats(prevChats => (
                 [...prevChats, {
                     role: "user",
                     content: prompt
-                },{
+                }, {
                     role: "assistant",
                     content: reply
                 }]
@@ -96,13 +96,12 @@ function ChatWindow() {
     return (
         <div className="chatWindow">
             <div className="navbar">
-                <span>SigmaGPT <i className="fa-solid fa-chevron-down"></i></span>
-                <div className="userIconDiv" onClick={handleProfileClick}>
+                <span className="appTitle">SigmaGPT <i className="fa-solid fa-chevron-down"></i></span>                <div className="userIconDiv" onClick={handleProfileClick}>
                     <span className="userIcon"><i className="fa-solid fa-user"></i></span>
                 </div>
             </div>
             {
-                isOpen && 
+                isOpen &&
                 <div className="dropDown">
                     <div className="dropDownItem"><i class="fa-solid fa-gear"></i> Settings</div>
                     <div className="dropDownItem"><i class="fa-solid fa-cloud-arrow-up"></i> Upgrade plan</div>
@@ -113,15 +112,15 @@ function ChatWindow() {
 
             <ScaleLoader color="#fff" loading={loading}>
             </ScaleLoader>
-            
+
             <div className="chatInput">
                 <div className="inputBox">
                     <input placeholder="Ask anything"
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter'? getReply() : ''}
+                        onKeyDown={(e) => e.key === 'Enter' ? getReply() : ''}
                     >
-                           
+
                     </input>
                     <div id="submit" onClick={getReply}><i className="fa-solid fa-paper-plane"></i></div>
                 </div>
