@@ -23,13 +23,14 @@ button {
 }
 
 .logo {
-    height: 25px;
-    width: 25px;
-    background-color: #fff;
+    height: 32px;
+    width: 32px;
     border-radius: 50%;
+    overflow: hidden;
     object-fit: cover;
+    transform: scale(1.5);
+    flex-shrink: 0;
 }
-
 button span {
     font-size: 20px;
 }
